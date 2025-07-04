@@ -25,8 +25,28 @@ export default function App() {
       const wsname = wb.SheetNames[sheetNumber];
       const ws = wb.Sheets[wsname];
 
-      const data = XLSX.utils.sheet_to_json(ws);
-      setJsonData(data);
+      const rawData = XLSX.utils.sheet_to_json(ws, {
+        raw: false,
+      }) as Record<string, string | number>[];
+
+      const processed = rawData.map(row => {
+        const processedRow: Record<string, string | number> = {};
+        for (const key in row) {
+          const value = row[key];
+          if (typeof value === 'string') {
+            if (/^-?\d+(\.\d+)?$/.test(value)) {
+              processedRow[key] = Number(value);
+            } else {
+              processedRow[key] = value;
+            }
+          } else {
+            processedRow[key] = value;
+          }
+        }
+        return processedRow;
+      });
+
+      setJsonData(processed);
       setCopied(false);
     };
 
